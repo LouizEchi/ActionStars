@@ -91,12 +91,9 @@ namespace UnityStandardAssets._2D
 		}
 
 		public void Jump(float jump) {
-			print (m_Grounded);
-			if (m_Grounded) {
-				m_Anim.SetBool ("Ground", false);
-				m_Rigidbody2D.AddForce (new Vector2 (0f, jump*100));
-				m_Rigidbody2D.velocity = new Vector2(5, m_Rigidbody2D.velocity.y);
-			}
+			m_Anim.SetBool ("Ground", false);
+			m_Rigidbody2D.AddForce (new Vector2 (0f, jump*100));
+			m_Rigidbody2D.velocity = new Vector2(5, m_Rigidbody2D.velocity.y);
 		}
 
 		public void Crouch(bool check) {

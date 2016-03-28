@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityStandardAssets.CrossPlatformInput;
+using System.Threading;
 
 namespace UnityStandardAssets._2D
 {
@@ -17,16 +18,16 @@ namespace UnityStandardAssets._2D
 		public Button compileButton;
 		private bool buttonIsPressed;
 		private List<string> compiledCode;
-		private int originalCount;
 		private List<float> timers;
 		private bool cleared = true;
-
+		private bool isCoroutineExecuting = false;
+		private bool isInitial;
+		
 
         private void Awake()
         {
             m_Character = GetComponent<PlatformerCharacter2D>();
 			compiledCode = new List<string> ();
-			originalCount = 0;
 			timers = new List<float> ();
          }
 
@@ -54,35 +55,36 @@ namespace UnityStandardAssets._2D
 
 		public void toggleCompile() {
 			if (cleared == false) {
-				var count = 0;
-				var runOnce = false;
-				compiledCode.ForEach (text => { 
-					var parsedInput = parseFunctionString (text);
-					if (parsedInput != null) {
-						runOnce = false;
-						while (timers[count] > 0) {
-							if (!runOnce) {
-								var parameters = getFunctionParameters (parsedInput [1]);
-								m_Character.InvokeAsFunctionCall (parsedInput [0], parameters);
-							}
-
-							runOnce = true;
-							timers [count] = timers [count] - 0.1f;
-						}
-					}
-					count++;
-				});
-				textView.text = "";
-				compiledCode.Clear ();
+				isInitial = true;
+				StartCoroutine(runCodes());
 				cleared = true;
 			}
 
 		}
-
+		
 		IEnumerator runCodes() {
-			yield return new WaitForSeconds(5);
-		}
+			if (isCoroutineExecuting)
+				yield break;
+			var time = 2;
+			isCoroutineExecuting = true;
+			var count = 0;
+			while(count < compiledCode.Count) {
+				var text = compiledCode[count];
+				var parsedInput = parseFunctionString (text);
+				if (parsedInput != null) {
+					print (parsedInput[1]);
+					var parameters = getFunctionParameters (parsedInput [1]);
+					m_Character.InvokeAsFunctionCall (parsedInput [0], parameters);
+				}
+				yield return new WaitForSeconds(time);
+				count++;
+			}
+			textView.text = "";
+			compiledCode.Clear ();
 
+			isCoroutineExecuting = false;
+		}
+		
 		public void storeCompile() {
 			var parsedInput = parseFunctionString (inputString.text);
 			if (parsedInput != null) {
@@ -97,8 +99,8 @@ namespace UnityStandardAssets._2D
         private void FixedUpdate()
         {
             // Read the inputs.
-            bool crouch = Input.GetKey(KeyCode.LeftControl);
-            float h = CrossPlatformInputManager.GetAxis("Horizontal");
+//            bool crouch = Input.GetKey(KeyCode.LeftControl);
+//            float h = CrossPlatformInputManager.GetAxis("Horizontal");
             // Pass all parameters to the character control script.
             //m_Character.Move(h, crouch, m_Jump);
             m_Jump = false;
